@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "aoc_2023"
+name = "aoc_2023_day_1"
 version = "0.1.0"
 dependencies = [
  "once_cell",
