@@ -1,4 +1,7 @@
-use regex::Regex;
+use {
+  once_cell::sync::Lazy,
+  regex::Regex,
+};
 
 pub fn document_calbration_sum (input: &str) -> u32 {
   let mut result = 0;
@@ -26,11 +29,11 @@ fn string_to_num (input: &str) -> u32 {
 }
 
 fn get_calibration_value (input: &str) -> u32 {
-  let re_first = Regex::new(r"(one|two|three|four|five|six|seven|eight|nine|[1-9]).*").unwrap();
-  let re_last = Regex::new(r".*(one|two|three|four|five|six|seven|eight|nine|[1-9])").unwrap();
+  static RE_FIRST: Lazy<Regex> = Lazy::new(|| Regex::new(r"(one|two|three|four|five|six|seven|eight|nine|[1-9]).*").unwrap());
+  static RE_LAST: Lazy<Regex> = Lazy::new(|| Regex::new(r".*(one|two|three|four|five|six|seven|eight|nine|[1-9])").unwrap());
 
-  let first = re_first.captures(input).unwrap().get(1).unwrap().as_str();
-  let last = re_last.captures(input).unwrap().get(1).unwrap().as_str();
+  let first = RE_FIRST.captures(input).unwrap().get(1).unwrap().as_str();
+  let last = RE_LAST.captures(input).unwrap().get(1).unwrap().as_str();
 
   let first = string_to_num(first) * 10;
   let last = string_to_num(last);
