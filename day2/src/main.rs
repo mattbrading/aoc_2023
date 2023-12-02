@@ -6,6 +6,7 @@ struct Game {
     max_blue: u32,
     max_red: u32,
     max_green: u32,
+    power: u32,
 }
 
 fn parse_game(input: &str) -> Game {
@@ -20,6 +21,7 @@ fn parse_game(input: &str) -> Game {
         max_blue: 0,
         max_green: 0,
         max_red: 0,
+        power: 0,
     };
 
     for round_str in result[1].split("; ") {
@@ -49,21 +51,26 @@ fn parse_game(input: &str) -> Game {
         }
     }
 
+    game.power = game.max_blue * game.max_green * game.max_red;
+
     return game;
 }
 
-fn sum_matching_games(input: &str) -> u32 {
-    let mut sum: u32 = 0;
+fn sum_games(input: &str) -> (u32, u32) {
+    let mut sum_matching: u32 = 0;
+    let mut sum_powers: u32 = 0;
 
     for game_str in input.split("\n") {
         let game = parse_game(game_str);
 
+        sum_powers += game.power;
+
         if game.max_red <= 12 && game.max_green <= 13 && game.max_blue <= 14 {
-            sum += game.id;
+            sum_matching += game.id;
         }
     }
 
-    return sum;
+    return (sum_matching, sum_powers);
 }
 
 fn main() {
@@ -74,18 +81,19 @@ fn main() {
 
     let timer = Instant::now();
 
-    let result = sum_matching_games(input.as_str());
+    let (sum_matching, sum_powers) = sum_games(input.as_str());
 
     let time_taken = timer.elapsed();
 
-    println!("Day 2 Result: {}", result);
+    println!("Day 2 Result, Part 1: {}", sum_matching);
+    println!("Day 2 Result, Part 2: {}", sum_powers);
     println!("Time Taken: {}ms", time_taken.as_millis());
 }
 
 #[cfg(test)]
 mod tests {
 
-    use crate::{parse_game, sum_matching_games, Game};
+    use crate::{parse_game, sum_games, Game};
 
     #[test]
     fn parse_game_test() {
@@ -96,6 +104,7 @@ mod tests {
                 max_blue: 6,
                 max_green: 2,
                 max_red: 4,
+                power: 48,
             },
         )];
 
@@ -116,8 +125,8 @@ mod tests {
             Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green\
         ";
 
-        let result = sum_matching_games(games);
+        let result = sum_games(games);
 
-        assert_eq!(result, 8);
+        assert_eq!(result, (8, 2286));
     }
 }
