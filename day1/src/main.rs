@@ -59,7 +59,7 @@ fn main() {
     let time_taken = timer.elapsed();
 
     println!("Day 1 Result: {}", result);
-    println!("Time Taken: {}ms", time_taken.as_millis());
+    println!("Time Taken: {:?}", time_taken);
 }
 
 #[cfg(test)]
