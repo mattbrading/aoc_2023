@@ -10,40 +10,37 @@ struct Game {
 }
 
 fn parse_game(input: &str) -> Game {
-    let result: Vec<&str> = input.split(": ").collect();
+    let (game_str, rounds_str) = input.split_once(": ").expect("Failed to parse game");
 
-    let game_id: Vec<&str> = result[0].split(" ").collect();
-    let game_id = game_id[1];
-    let game_id = u32::from_str_radix(game_id, 10).unwrap();
+    let (_, game_id) = game_str.split_once(" ").expect("Mising Game ID");
 
-    let mut game = Game {
-        id: game_id,
-        max_blue: 0,
-        max_green: 0,
-        max_red: 0,
-        power: 0,
-    };
+    let game_id = u32::from_str_radix(game_id, 10).expect("Game ID not an int");
 
-    for round_str in result[1].split("; ") {
+    let mut max_blue = 0;
+    let mut max_red = 0;
+    let mut max_green = 0;
+
+    for round_str in rounds_str.split("; ") {
         for colour_str in round_str.split(", ") {
-            let elements: Vec<&str> = colour_str.split(" ").collect();
+            let (amount, colour) = colour_str
+                .split_once(" ")
+                .expect("Failed to parse colour_str");
+            let amount = u32::from_str_radix(amount, 10).unwrap();
 
-            let amount = u32::from_str_radix(elements[0], 10).unwrap();
-
-            match elements[1] {
+            match colour {
                 "red" => {
-                    if amount > game.max_red {
-                        game.max_red = amount;
+                    if amount > max_red {
+                        max_red = amount;
                     };
                 }
                 "green" => {
-                    if amount > game.max_green {
-                        game.max_green = amount;
+                    if amount > max_green {
+                        max_green = amount;
                     };
                 }
                 "blue" => {
-                    if amount > game.max_blue {
-                        game.max_blue = amount;
+                    if amount > max_blue {
+                        max_blue = amount;
                     };
                 }
                 &_ => {}
@@ -51,16 +48,20 @@ fn parse_game(input: &str) -> Game {
         }
     }
 
-    game.power = game.max_blue * game.max_green * game.max_red;
-
-    return game;
+    return Game {
+        id: game_id,
+        max_blue,
+        max_red,
+        max_green,
+        power: max_blue * max_green * max_red,
+    };
 }
 
 fn sum_games(input: &str) -> (u32, u32) {
     let mut sum_matching: u32 = 0;
     let mut sum_powers: u32 = 0;
 
-    for game_str in input.split("\n") {
+    for game_str in input.lines() {
         let game = parse_game(game_str);
 
         sum_powers += game.power;
@@ -87,7 +88,7 @@ fn main() {
 
     println!("Day 2 Result, Part 1: {}", sum_matching);
     println!("Day 2 Result, Part 2: {}", sum_powers);
-    println!("Time Taken: {}ms", time_taken.as_millis());
+    println!("Time Taken: {:?}", time_taken);
 }
 
 #[cfg(test)]
