@@ -94,7 +94,7 @@ fn parse_schematic(input: &str) -> (u32, u32) {
             let (start_col, end_col) = part.cols;
             let col_before = start_col.checked_add_signed(-1).unwrap_or(0);
             let col_after = end_col
-                .checked_add(2)
+                .checked_add(1)
                 .unwrap_or(lines_length)
                 .min(lines_length);
 
