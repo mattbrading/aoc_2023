@@ -3,18 +3,18 @@ use std::{fs, time::Instant};
 #[derive(Clone, Debug, PartialEq)]
 struct Part {
     value: u32,
-    row: u32,
-    cols: (u32, u32),
+    row: usize,
+    cols: (usize, usize),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 
 struct Gear {
-    row: u32,
-    col: u32,
+    row: usize,
+    col: usize,
 }
 
-fn parse_line(input: &str, row: u32) -> (Vec<Part>, Vec<Gear>) {
+fn parse_line(input: &str, row: usize) -> (Vec<Part>, Vec<Gear>) {
     let mut parts: Vec<Part> = [].to_vec();
     let mut gears: Vec<Gear> = [].to_vec();
 
@@ -22,14 +22,9 @@ fn parse_line(input: &str, row: u32) -> (Vec<Part>, Vec<Gear>) {
 
     for (index, char) in input.char_indices() {
         let is_digit = char.is_digit(10);
-        let index_int: u32 = index.try_into().unwrap();
-        let index_int = index_int;
 
         if char == '*' {
-            gears.push(Gear {
-                row,
-                col: index_int,
-            })
+            gears.push(Gear { row, col: index })
         }
 
         match (is_digit, number_start) {
@@ -37,11 +32,10 @@ fn parse_line(input: &str, row: u32) -> (Vec<Part>, Vec<Gear>) {
             (false, Some(start)) => {
                 let number = input.get(start..index).unwrap();
                 let number = u32::from_str_radix(number, 10).unwrap();
-                let start_int: u32 = start.try_into().unwrap();
                 parts.push(Part {
                     value: number,
                     row,
-                    cols: (start_int, index_int),
+                    cols: (start, index),
                 });
                 number_start = None
             }
@@ -53,12 +47,10 @@ fn parse_line(input: &str, row: u32) -> (Vec<Part>, Vec<Gear>) {
         let start = number_start.unwrap();
         let number = input.get(start..).unwrap();
         let number = u32::from_str_radix(number, 10).unwrap();
-        let start_int: u32 = start.try_into().unwrap();
-        let end_int: u32 = input.len().try_into().unwrap();
         parts.push(Part {
             value: number,
             row,
-            cols: (start_int, end_int),
+            cols: (start, input.len()),
         });
     }
 
@@ -70,11 +62,10 @@ fn parse_schematic(input: &str) -> (u32, u32) {
     let mut possible_gears: Vec<Gear> = [].to_vec();
 
     let lines: Vec<&str> = input.lines().collect();
-    let lines_length: i32 = lines.len().try_into().unwrap();
+    let lines_length = lines.len();
 
     for row in 0..lines.len() {
-        let row_int: u32 = row.try_into().unwrap();
-        let (mut parts, mut gears) = parse_line(lines.get(row).unwrap(), row_int);
+        let (mut parts, mut gears) = parse_line(lines.get(row).unwrap(), row);
 
         possible_parts.append(&mut parts);
         possible_gears.append(&mut gears);
@@ -87,11 +78,12 @@ fn parse_schematic(input: &str) -> (u32, u32) {
     for part in possible_parts {
         let mut matched = false;
 
-        let row_above: i32 = part.row.try_into().unwrap();
-        let row_above = (row_above - 1).max(0);
-
-        let row_below: i32 = part.row.try_into().unwrap();
-        let row_below = (row_below + 2).min(lines_length);
+        let row_above = part.row.checked_add_signed(-1).unwrap_or(0);
+        let row_below = part
+            .row
+            .checked_add(2)
+            .unwrap_or(lines_length)
+            .min(lines_length);
 
         let neighbor_rows = row_above..row_below;
 
@@ -100,20 +92,17 @@ fn parse_schematic(input: &str) -> (u32, u32) {
                 break;
             }
             let (start_col, end_col) = part.cols;
-
-            let col_before: i32 = start_col.try_into().unwrap();
-            let col_before = (col_before - 1).max(0);
-
-            let col_after: i32 = end_col.try_into().unwrap();
-            let col_after = (col_after + 1).min(lines_length);
+            let col_before = start_col.checked_add_signed(-1).unwrap_or(0);
+            let col_after = end_col
+                .checked_add(2)
+                .unwrap_or(lines_length)
+                .min(lines_length);
 
             let neighbor_cols = col_before..col_after;
 
             for col in neighbor_cols {
-                let row_index: usize = row.try_into().unwrap();
-                let col_index: usize = col.try_into().unwrap();
-                let chars: Vec<char> = lines.get(row_index).unwrap().chars().collect();
-                let char = chars.get(col_index).unwrap();
+                let chars: Vec<char> = lines.get(row).unwrap().chars().collect();
+                let char = chars.get(col).unwrap();
                 let char = char.to_owned();
                 if char != '.' && !char.is_digit(10) {
                     matched = true;
@@ -129,41 +118,43 @@ fn parse_schematic(input: &str) -> (u32, u32) {
     }
 
     for gear in possible_gears {
-        let row_above: i32 = gear.row.try_into().unwrap();
-        let row_above = (row_above - 1).max(0);
-
-        let row_below: i32 = gear.row.try_into().unwrap();
-        let row_below = (row_below + 2).min(lines_length);
+        let row_above = gear.row.checked_add_signed(-1).unwrap_or(0);
+        let row_below = gear
+            .row
+            .checked_add(2)
+            .unwrap_or(lines_length)
+            .min(lines_length);
 
         let neighbor_rows = row_above..row_below;
 
         let mut neighbors: Vec<Part> = [].to_vec();
 
         for row in neighbor_rows {
-            let col_before: i32 = gear.col.try_into().unwrap();
-            let col_before = (col_before - 1).max(0);
-
-            let col_after: i32 = gear.col.try_into().unwrap();
-            let col_after = (col_after + 2).min(lines_length);
+            let col_before = gear.col.checked_add_signed(-1).unwrap_or(0);
+            let col_after = gear
+                .col
+                .checked_add(2)
+                .unwrap_or(lines_length)
+                .min(lines_length);
 
             let neighbor_cols = col_before..col_after;
 
             for col in neighbor_cols {
-                let part = true_parts.iter()
-                    .find(|p| (p.cols.0..p.cols.1).contains(&col.try_into().unwrap()) && p.row == row.try_into().unwrap());
+                let part = true_parts
+                    .iter()
+                    .find(|p| (p.cols.0..p.cols.1).contains(&col) && p.row == row);
 
                 match part {
                     Some(p) => {
                         if !neighbors.contains(p) {
                             neighbors.push(p.clone())
                         }
-                    },
-                    None => {},
+                    }
+                    None => {}
                 }
             }
         }
 
-        
         if neighbors.len() == 2 {
             let gear_ratio = neighbors.iter().fold(1, |acc, x| acc * x.value);
             gear_ratios_sum += gear_ratio;
