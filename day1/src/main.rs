@@ -50,7 +50,7 @@ fn main() {
     println!("Merry Xmas!");
 
     let input =
-        fs::read_to_string("./src/day1.txt").expect("Should have been able to read the file");
+        fs::read_to_string("./src/input.txt").expect("Should have been able to read the file");
 
     let timer = Instant::now();
 
