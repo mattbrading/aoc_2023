@@ -16,7 +16,11 @@ fn find_map_dest(input: u64, maps: &Vec<Map>) -> u64 {
     }
 }
 
-fn find_best_location(input: &str) -> u64 {
+struct Result {
+    part_1: u64,
+    part_2: u64,
+}
+fn find_best_location(input: &str) -> Result {
     let (seeds_line, maps) = input.split_once("\n\n").unwrap();
 
     let seeds = seeds_line
@@ -43,10 +47,24 @@ fn find_best_location(input: &str) -> u64 {
             .collect::<Vec<Map>>()
     });
 
-    return seeds
+    let part_1 = seeds.clone()
         .map(|seed| maps.clone().fold(seed, |acc, map| find_map_dest(acc, &map)))
         .min()
         .expect("No seeds in input!");
+
+    let mut locations = maps.clone().last().unwrap();
+    locations.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+    let part_2 = seeds.clone().step_by(2)
+        .zip(seeds.clone().skip(1).step_by(2))
+        .map(|(start, len)| start..start+len)
+        .inspect(|range| println!("{:?}", range))
+        .fold(u64::MAX, |acc, seed_range|
+            seed_range
+                .fold(u64::MAX, |min, seed| maps.clone().fold(seed, |acc, map| find_map_dest(acc, &map)).min(min)).min(acc)
+        );
+
+    return Result { part_1, part_2 }
 }
 
 fn main() {
@@ -61,7 +79,8 @@ fn main() {
 
     let time_taken = timer.elapsed();
 
-    println!("Day 5 Result, Part 1: {}", result);
+    println!("Day 5 Result, Part 1: {}", result.part_1);
+    println!("Day 5 Result, Part 2: {}", result.part_2);
     println!("Time Taken: {:?}", time_taken);
 }
 
@@ -115,6 +134,7 @@ mod tests {
 
         let result = find_best_location(input);
 
-        assert_eq!(result, 35)
+        assert_eq!(result.part_1, 35);
+        assert_eq!(result.part_2, 46);
     }
 }
