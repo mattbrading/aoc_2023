@@ -12,7 +12,7 @@ fn calculate_range(duration: &u64, min_distance: &u64) -> Range<u64> {
 
 fn count_winning_options(duration: &u64, min_distance: &u64) -> u64 {
     let winning_range = calculate_range(duration, min_distance);
-    return  winning_range.count() as u64;
+    return winning_range.end - winning_range.start;
 }
 
 fn sum_winning_options(races:Vec<(u64,u64)>) -> u64 {
