@@ -1,4 +1,4 @@
-use std::{fs, time::Instant};
+use std::{env::args, fs, time::Instant};
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -77,8 +77,9 @@ fn sum_games(input: &str) -> (u32, u32) {
 fn main() {
     println!("Advent of Code, Day 2!");
 
-    let input =
-        fs::read_to_string("./src/input.txt").expect("Should have been able to read the file");
+    let file_path = args().nth(1).expect("Missing File Path!");
+
+    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
     let timer = Instant::now();
 

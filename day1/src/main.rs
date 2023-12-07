@@ -1,4 +1,4 @@
-use std::{fs, time::Instant};
+use std::{env::args, fs, time::Instant};
 
 use {once_cell::sync::Lazy, regex::Regex};
 
@@ -49,8 +49,9 @@ fn get_calibration_value(input: &str) -> u32 {
 fn main() {
     println!("Merry Xmas!");
 
-    let input =
-        fs::read_to_string("./src/input.txt").expect("Should have been able to read the file");
+    let file_path = args().nth(1).expect("Missing File Path!");
+
+    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
     let timer = Instant::now();
 

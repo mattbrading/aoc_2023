@@ -1,4 +1,4 @@
-use std::{fs, time::Instant, collections::HashMap};
+use std::{collections::HashMap, env::args, fs, time::Instant};
 
 struct CardScore {
     id: u32,
@@ -57,19 +57,15 @@ fn score_set(input: &str) -> Score {
         .lines()
         .map(|card| score_card(card))
         .fold(HashMap::new(), |mut acc: HashMap<u32, u32>, card| {
-            let copies: u32 = *acc.entry(card.id)
-                .and_modify(|x| *x += 1)
-                .or_insert(1);
-            
+            let copies: u32 = *acc.entry(card.id).and_modify(|x| *x += 1).or_insert(1);
+
             if card.matches > 0 {
-                for id in  card.id+1..card.id+card.matches+1 {
-                    acc.entry(id)
-                        .and_modify(|x| *x += copies)
-                        .or_insert(copies);
-                };
+                for id in card.id + 1..card.id + card.matches + 1 {
+                    acc.entry(id).and_modify(|x| *x += copies).or_insert(copies);
+                }
             };
-            
-            return acc
+
+            return acc;
         })
         .values()
         .fold(0, |acc, x| acc + x);
@@ -80,8 +76,9 @@ fn score_set(input: &str) -> Score {
 fn main() {
     println!("Advent of Code, Day 4!");
 
-    let input =
-        fs::read_to_string("./src/input.txt").expect("Should have been able to read the file");
+    let file_path = args().nth(1).expect("Missing File Path!");
+
+    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
     let timer = Instant::now();
 
