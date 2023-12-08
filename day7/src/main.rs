@@ -1,9 +1,5 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    env::args,
-    fs,
-    time::Instant,
-};
+use aoc;
+use std::collections::{BTreeMap, HashMap};
 
 fn parse_hand(cards: &str, jokers: bool) -> u8 {
     let mut counts = cards
@@ -92,22 +88,12 @@ fn sum_winnings(hands: &str, jokers: bool) -> u32 {
 }
 
 fn main() {
-    println!("Advent of Code, Day 7!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let part_1 = sum_winnings(input.as_str(), false);
-    let part_2 = sum_winnings(input.as_str(), true);
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 7 Result, Part 1: {}", part_1);
-    println!("Day 7 Result, Part 2: {}", part_2);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(7, |input| {
+        (
+            Some(sum_winnings(input, false) as u64),
+            Some(sum_winnings(input, true) as u64),
+        )
+    });
 }
 
 #[cfg(test)]

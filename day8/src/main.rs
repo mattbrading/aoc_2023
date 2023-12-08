@@ -1,4 +1,5 @@
-use std::{collections::HashMap, env::args, fs, time::Instant};
+use aoc;
+use std::collections::HashMap;
 
 fn traverse(
     start: &str,
@@ -38,11 +39,7 @@ fn lcm(a: u64, b: u64) -> u64 {
     a * b / gcd(a, b)
 }
 
-struct Result {
-    part_1: Option<u64>,
-    part_2: Option<u64>,
-}
-fn find_step_count(input: &str) -> Result {
+fn find_step_count(input: &str) -> aoc::Result {
     let (instructions, map) = input.split_once("\n\n").unwrap();
 
     let map = HashMap::from_iter(map.lines().map(|l| {
@@ -59,31 +56,11 @@ fn find_step_count(input: &str) -> Result {
         .map(|start| traverse(start, &map, instructions, |l| !l.ends_with("Z")))
         .fold(Some(1), |acc, val| Some(lcm(val.unwrap(), acc.unwrap())));
 
-    return Result { part_1, part_2 };
+    return (part_1, part_2);
 }
 
 fn main() {
-    println!("Advent of Code, Day 8!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let result = find_step_count(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!(
-        "Day 8 Result, Part 1: {}",
-        result.part_1.unwrap_or_default()
-    );
-    println!(
-        "Day 8 Result, Part 2: {}",
-        result.part_2.unwrap_or_default()
-    );
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(8, find_step_count);
 }
 
 #[cfg(test)]
@@ -99,9 +76,9 @@ mod tests {
             ZZZ = (ZZZ, ZZZ)\
         ";
 
-        let result = find_step_count(input);
+        let (part_1, _) = find_step_count(input);
 
-        assert_eq!(result.part_1, Some(6));
+        assert_eq!(part_1, Some(6));
     }
 
     #[test]
@@ -118,8 +95,8 @@ mod tests {
             XXX = (XXX, XXX)\
         ";
 
-        let result = find_step_count(input);
+        let (_, part_2) = find_step_count(input);
 
-        assert_eq!(result.part_2, Some(6));
+        assert_eq!(part_2, Some(6));
     }
 }

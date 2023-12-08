@@ -1,4 +1,5 @@
-use std::{collections::HashMap, env::args, fs, time::Instant};
+use aoc;
+use std::collections::HashMap;
 
 struct CardScore {
     id: u32,
@@ -43,11 +44,7 @@ fn score_card(card_str: &str) -> CardScore {
     };
 }
 
-struct Score {
-    part_1: u32,
-    part_2: u32,
-}
-fn score_set(input: &str) -> Score {
+fn score_set(input: &str) -> aoc::Result {
     let part_1 = input
         .lines()
         .map(|card| score_card(card).power_score)
@@ -70,25 +67,11 @@ fn score_set(input: &str) -> Score {
         .values()
         .fold(0, |acc, x| acc + x);
 
-    return Score { part_1, part_2 };
+    return (Some(part_1 as u64), Some(part_2 as u64));
 }
 
 fn main() {
-    println!("Advent of Code, Day 4!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let result = score_set(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 3 Result, Part 1: {}", result.part_1);
-    println!("Day 3 Result, Part 2: {}", result.part_2);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(4, score_set);
 }
 
 #[cfg(test)]
@@ -116,9 +99,9 @@ mod tests {
         Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11\
         ";
 
-        let result = score_set(input);
+        let (part_1, part_2) = score_set(input);
 
-        assert_eq!(result.part_1, 13);
-        assert_eq!(result.part_2, 30);
+        assert_eq!(part_1, Some(13));
+        assert_eq!(part_2, Some(30));
     }
 }

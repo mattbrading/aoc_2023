@@ -1,4 +1,4 @@
-use std::{env::args, fs, time::Instant};
+use aoc;
 
 fn count_winning_options(duration: &u64, min_distance: &u64) -> u64 {
     let rhs = duration.clone() as f64 / 2.0;
@@ -10,12 +10,7 @@ fn count_winning_options(duration: &u64, min_distance: &u64) -> u64 {
     return max_root - min_root;
 }
 
-struct Result {
-    part_1: u64,
-    part_2: u64,
-}
-
-fn parse_input(input: &str) -> Result {
+fn parse_input(input: &str) -> aoc::Result {
     let (time_str, dist_str) = input.split_once("\n").unwrap();
 
     let times = time_str
@@ -50,25 +45,11 @@ fn parse_input(input: &str) -> Result {
 
     let part_2 = count_winning_options(&combined_time, &combined_dist);
 
-    return Result { part_1, part_2 };
+    return (Some(part_1), Some(part_2));
 }
 
 fn main() {
-    println!("Advent of Code, Day 6!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let result = parse_input(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 6 Result, Part 1: {}", result.part_1);
-    println!("Day 6 Result, Part 2: {}", result.part_2);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(6, parse_input);
 }
 
 #[cfg(test)]
@@ -93,8 +74,8 @@ mod tests {
             Distance:  9  40  200\
         ";
 
-        let result = parse_input(input);
-        assert_eq!(result.part_1, 288);
-        assert_eq!(result.part_2, 71503);
+        let (part_1, part_2) = parse_input(input);
+        assert_eq!(part_1, Some(288));
+        assert_eq!(part_2, Some(71503));
     }
 }

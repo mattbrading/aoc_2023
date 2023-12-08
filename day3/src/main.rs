@@ -1,4 +1,4 @@
-use std::{env::args, fs, time::Instant};
+use aoc;
 
 #[derive(Clone, Debug, PartialEq)]
 struct Part {
@@ -57,7 +57,7 @@ fn parse_line(input: &str, row: usize) -> (Vec<Part>, Vec<Gear>) {
     return (parts, gears);
 }
 
-fn parse_schematic(input: &str) -> (u32, u32) {
+fn parse_schematic(input: &str) -> aoc::Result {
     let mut possible_parts: Vec<Part> = [].to_vec();
     let mut possible_gears: Vec<Gear> = [].to_vec();
 
@@ -161,25 +161,11 @@ fn parse_schematic(input: &str) -> (u32, u32) {
         }
     }
 
-    return (parts_sum, gear_ratios_sum);
+    return (Some(parts_sum as u64), Some(gear_ratios_sum as u64));
 }
 
 fn main() {
-    println!("Advent of Code, Day 3!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let (part_1, part_2) = parse_schematic(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 3 Result, Part 1: {}", part_1);
-    println!("Day 3 Result, Part 2: {}", part_2);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(3, parse_schematic);
 }
 
 #[cfg(test)]
@@ -276,7 +262,7 @@ mod tests {
 
         let (part_1, part_2) = parse_schematic(input);
 
-        assert_eq!(part_1, 4361);
-        assert_eq!(part_2, 467835);
+        assert_eq!(part_1, Some(4361));
+        assert_eq!(part_2, Some(467835));
     }
 }

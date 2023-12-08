@@ -1,4 +1,4 @@
-use std::{env::args, fs, time::Instant};
+use aoc;
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -57,7 +57,7 @@ fn parse_game(input: &str) -> Game {
     };
 }
 
-fn sum_games(input: &str) -> (u32, u32) {
+fn sum_games(input: &str) -> aoc::Result {
     let mut sum_matching: u32 = 0;
     let mut sum_powers: u32 = 0;
 
@@ -71,25 +71,11 @@ fn sum_games(input: &str) -> (u32, u32) {
         }
     }
 
-    return (sum_matching, sum_powers);
+    return (Some(sum_matching as u64), Some(sum_powers as u64));
 }
 
 fn main() {
-    println!("Advent of Code, Day 2!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let (sum_matching, sum_powers) = sum_games(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 2 Result, Part 1: {}", sum_matching);
-    println!("Day 2 Result, Part 2: {}", sum_powers);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(2, sum_games);
 }
 
 #[cfg(test)]
@@ -129,6 +115,6 @@ mod tests {
 
         let result = sum_games(games);
 
-        assert_eq!(result, (8, 2286));
+        assert_eq!(result, (Some(8), Some(2286)));
     }
 }

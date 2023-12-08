@@ -1,4 +1,5 @@
-use std::{collections::BTreeMap, env::args, fs, ops::Range, time::Instant};
+use aoc;
+use std::{collections::BTreeMap, ops::Range};
 
 type Map = (u64, u64, u64);
 
@@ -80,11 +81,7 @@ fn find_mapped_ranges(input: Range<u64>, map: &MapTree) -> Vec<Range<u64>> {
     return ranges;
 }
 
-struct Result {
-    part_1: u64,
-    part_2: u64,
-}
-fn find_best_location(input: &str) -> Result {
+fn find_best_location(input: &str) -> aoc::Result {
     let (seeds_line, maps) = input.split_once("\n\n").unwrap();
 
     let seeds = seeds_line
@@ -147,25 +144,11 @@ fn find_best_location(input: &str) -> Result {
         .min()
         .expect("No seeds in input!");
 
-    return Result { part_1, part_2 };
+    return (Some(part_1), Some(part_2));
 }
 
 fn main() {
-    println!("Advent of Code, Day 5!");
-
-    let file_path = args().nth(1).expect("Missing File Path!");
-
-    let input = fs::read_to_string(file_path).expect("Should have been able to read the file");
-
-    let timer = Instant::now();
-
-    let result = find_best_location(input.as_str());
-
-    let time_taken = timer.elapsed();
-
-    println!("Day 5 Result, Part 1: {}", result.part_1);
-    println!("Day 5 Result, Part 2: {}", result.part_2);
-    println!("Time Taken: {:?}", time_taken);
+    aoc::run(5, find_best_location);
 }
 
 #[cfg(test)]
@@ -231,9 +214,9 @@ mod tests {
             56 93 4\
         ";
 
-        let result = find_best_location(input);
+        let (part_1, part_2) = find_best_location(input);
 
-        assert_eq!(result.part_1, 35);
-        assert_eq!(result.part_2, 46);
+        assert_eq!(part_1, Some(35));
+        assert_eq!(part_2, Some(46));
     }
 }
