@@ -1,37 +1,21 @@
 use std::{collections::HashMap, env::args, fs, time::Instant};
-#[derive(Debug)]
-enum Instruction {
-    L,
-    R,
-}
-
-impl From<&char> for Instruction {
-    fn from(value: &char) -> Self {
-        match value {
-            'L' => Some(Instruction::L),
-            'R' => Some(Instruction::R),
-            _ => None,
-        }
-        .expect("Invalid Instruction")
-    }
-}
 
 fn traverse(
-    start: String,
-    map: &HashMap<String, (String, String)>,
-    instructions: &Vec<Instruction>,
-    end_condition: fn(&String) -> bool,
+    start: &str,
+    map: &HashMap<&str, (&str, &str)>,
+    instructions: &str,
+    end_condition: fn(&str) -> bool,
 ) -> Option<u64> {
-    let mut instructions = instructions.iter().cycle();
+    let mut instructions = instructions.chars().cycle();
     let mut location = start;
     let mut count = Some(0);
-    while end_condition(&location) {
+    while end_condition(location) {
         count = count.and_then(|v| Some(v + 1));
-        let next = &map.get(&location);
+        let next = &map.get(location);
 
         location = match (next, instructions.next()) {
-            (Some(n), Some(Instruction::L)) => n.0.clone(),
-            (Some(n), Some(Instruction::R)) => n.1.clone(),
+            (Some(n), Some('L')) => n.0,
+            (Some(n), Some('R')) => n.1,
             _ => {
                 count = None;
                 break;
@@ -44,9 +28,10 @@ fn traverse(
 
 fn gcd(a: u64, b: u64) -> u64 {
     if b > 0 {
-        return gcd(b, a % b);
+        gcd(b, a % b)
+    } else {
+        a
     }
-    a
 }
 
 fn lcm(a: u64, b: u64) -> u64 {
@@ -60,30 +45,18 @@ struct Result {
 fn find_step_count(input: &str) -> Result {
     let (instructions, map) = input.split_once("\n\n").unwrap();
 
-    let instructions = instructions
-        .trim()
-        .chars()
-        .map(|c| Instruction::from(&c))
-        .collect();
+    let map = HashMap::from_iter(map.lines().map(|l| {
+        let (key, vals) = l.split_once(" = ").unwrap();
+        let val = vals[1..vals.len() - 1].split_once(", ").unwrap();
+        (key, val)
+    }));
 
-    let map = map.lines().fold(HashMap::new(), |mut acc, l| {
-        let string = l.to_owned().replace(&['_', '(', ')', ',', '='], "");
+    let part_1 = traverse("AAA", &map, instructions, |l| l != "ZZZ");
 
-        let mut pieces = string.split_whitespace().map(|l| l.to_string());
-
-        let key = pieces.next().unwrap();
-        let val = (pieces.next().unwrap(), pieces.next().unwrap());
-
-        acc.insert(key, val);
-        return acc;
-    });
-
-    let part_1 = traverse(String::from("AAA"), &map, &instructions, |l| l != "ZZZ");
-
-    let visting = map.keys().filter(|k| k.ends_with("A")).map(|k| k.clone());
-
-    let part_2 = visting
-        .map(|start| traverse(start, &map, &instructions, |l| !l.ends_with("Z")))
+    let part_2 = map
+        .keys()
+        .filter(|k| k.ends_with("A"))
+        .map(|start| traverse(start, &map, instructions, |l| !l.ends_with("Z")))
         .fold(Some(1), |acc, val| Some(lcm(val.unwrap(), acc.unwrap())));
 
     return Result { part_1, part_2 };
