@@ -4,9 +4,9 @@ use aoc;
 use array2d::Array2D;
 
 struct Universe {
-    map: Array2D<char>,
     empty_rows: BTreeSet<usize>,
     empty_cols: BTreeSet<usize>,
+    galaxies: Vec<(usize, usize)>,
 }
 
 impl From<&str> for Universe {
@@ -29,28 +29,27 @@ impl From<&str> for Universe {
                 .map(|c| c.0),
         );
 
+        let galaxies = map
+            .enumerate_row_major()
+            .filter(|c| *c.1 == '#')
+            .map(|c| c.0)
+            .collect();
+
         return Self {
-            map,
             empty_cols,
             empty_rows,
+            galaxies,
         };
     }
 }
 
 impl Universe {
     fn sum_distances(&self, age: usize) -> u64 {
-        let galaxies: Vec<(usize, usize)> = self
-            .map
-            .enumerate_row_major()
-            .filter(|c| *c.1 == '#')
-            .map(|c| c.0)
-            .collect();
-
-        galaxies
+        self.galaxies
             .iter()
             .enumerate()
             .map(|(index, loc)| {
-                galaxies[index..]
+                self.galaxies[index..]
                     .iter()
                     .map(|locb| {
                         let mut row_ends = [loc.0, locb.0];
