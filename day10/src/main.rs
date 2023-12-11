@@ -100,6 +100,27 @@ impl Map {
         return Some(((row?, column?), next_direction?));
     }
 
+    fn find_start_tile_type(&self) -> char {
+        let dir: Vec<&Direction> = [
+            Direction::North,
+            Direction::South,
+            Direction::East,
+            Direction::West,
+        ]
+        .iter()
+        .filter(|d| self.next_tile(&self.start, d).is_some())
+        .collect();
+
+        match (dir[0], dir[1]) {
+            (Direction::North, Direction::East) => 'L',
+            (Direction::South, Direction::East) => 'F',
+            (Direction::South, Direction::West) => '7',
+            (Direction::North, Direction::West) => 'J',
+            (Direction::East, Direction::West) => '-',
+            _ => '|',
+        }
+    }
+
     fn find_path(&self) -> HashSet<(usize, usize)> {
         let (mut position, mut direction) = [
             Direction::North,
@@ -155,18 +176,21 @@ impl Map {
                             ('L', _) => true,
                             ('7', Some('L')) => false,
                             ('J', Some('F')) => false,
-                            ('7', Some('S')) => false,
-                            ('J', Some('S')) => false,
                             ('7', _) => true,
                             ('J', _) => true,
                             _ => false,
                         };
 
+                        let found_boundry = match char {
+                            'S' => self.find_start_tile_type(),
+                            _ => char.clone(),
+                        };
+
                         match (is_pipe, is_boundry, inside) {
-                            (true, true, _) => (counter, !inside, Some(*char)),
+                            (true, true, _) => (counter, !inside, Some(found_boundry)),
                             (true, false, _) => (counter, inside, last_boundry),
-                            (false, _, true) => (counter + 1, inside, last_boundry),
-                            _ => (counter, inside, last_boundry),
+                            (false, _, true) => (counter + 1, inside, None),
+                            _ => (counter, inside, None),
                         }
                     },
                 );
