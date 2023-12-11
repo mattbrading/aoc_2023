@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use aoc;
 use array2d::Array2D;
@@ -99,6 +99,83 @@ impl Map {
 
         return Some(((row?, column?), next_direction?));
     }
+
+    fn find_path(&self) -> HashSet<(usize, usize)> {
+        let (mut position, mut direction) = [
+            Direction::North,
+            Direction::South,
+            Direction::East,
+            Direction::West,
+        ]
+        .iter()
+        .find_map(|d| self.next_tile(&self.start, d))
+        .expect("No first move found!");
+
+        let mut path = HashSet::from([self.start, position]);
+
+        loop {
+            match self.next_tile(&position, &direction) {
+                Some(v) => {
+                    path.insert(v.0);
+                    position = v.0;
+                    direction = v.1;
+                }
+                _ => {
+                    break;
+                }
+            };
+        }
+
+        return path;
+    }
+
+    fn find_farthest_point(&self) -> Option<u64> {
+        let path = self.find_path();
+        return (path.len() as u64).checked_div(2);
+    }
+
+    fn find_path_area(&self) -> u64 {
+        let path = self.find_path();
+
+        let counter = self
+            .map
+            .rows_iter()
+            .enumerate()
+            .map(|(row_index, row)| {
+                let (counter, _, _) = row.enumerate().fold(
+                    (0, false, None),
+                    |(counter, inside, last_boundry), (col_index, char)| {
+                        let position = (row_index, col_index);
+                        let is_pipe = path.contains(&position);
+
+                        let is_boundry = match (char, last_boundry) {
+                            ('|', _) => true,
+                            ('S', _) => true,
+                            ('F', _) => true,
+                            ('L', _) => true,
+                            ('7', Some('L')) => false,
+                            ('J', Some('F')) => false,
+                            ('7', Some('S')) => false,
+                            ('J', Some('S')) => false,
+                            ('7', _) => true,
+                            ('J', _) => true,
+                            _ => false,
+                        };
+
+                        match (is_pipe, is_boundry, inside) {
+                            (true, true, _) => (counter, !inside, Some(*char)),
+                            (true, false, _) => (counter, inside, last_boundry),
+                            (false, _, true) => (counter + 1, inside, last_boundry),
+                            _ => (counter, inside, last_boundry),
+                        }
+                    },
+                );
+                return counter;
+            })
+            .sum();
+
+        return counter;
+    }
 }
 
 impl From<&str> for Map {
@@ -116,62 +193,18 @@ impl From<&str> for Map {
     }
 }
 
-fn find_farthest_point(input: &str) -> Option<u64> {
-    let map = Map::from(input);
-
-    let mut paths = vec![
-        (map.start, Direction::North),
-        (map.start, Direction::South),
-        (map.start, Direction::East),
-        (map.start, Direction::West),
-    ];
-
-    let mut counter = 0;
-    let mut final_count: Option<u64> = None;
-
-    while !paths.is_empty() {
-        counter += 1;
-
-        let mut new_paths = vec![];
-        let mut visited: HashMap<(usize, usize), u64> = HashMap::new();
-
-        for (current, direction) in paths {
-            visited.insert(current, counter - 1);
-
-            match map.next_tile(&current, &direction) {
-                Some(v) => {
-                    if visited.contains_key(&v.0) {
-                        final_count = visited.get(&v.0).copied();
-                    } else {
-                        visited.insert(v.0, counter);
-                        new_paths.push(v);
-                    }
-                }
-                _ => {}
-            };
-        }
-
-        if final_count.is_some() {
-            break;
-        }
-
-        paths = new_paths;
-    }
-
-    return final_count;
-}
-
 fn main() {
     aoc::run(10, |input| {
-        let part_1 = find_farthest_point(input);
-
-        return (part_1, None);
+        let map = Map::from(input);
+        let part_1 = map.find_farthest_point();
+        let part_2 = map.find_path_area();
+        return (part_1, Some(part_2));
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::find_farthest_point;
+    use crate::Map;
 
     #[test]
     fn test_find_farthest_point() {
@@ -183,7 +216,7 @@ mod tests {
             L|-JF\
         ";
 
-        let result = find_farthest_point(input);
+        let result = Map::from(input).find_farthest_point();
 
         assert_eq!(result, Some(4));
     }
@@ -198,8 +231,66 @@ mod tests {
             LJ...\
         ";
 
-        let result = find_farthest_point(input);
+        let result = Map::from(input).find_farthest_point();
 
         assert_eq!(result, Some(8));
+    }
+
+    #[test]
+    fn find_path_area() {
+        let input = "\
+            ...........\n\
+            .S-------7.\n\
+            .|F-----7|.\n\
+            .||.....||.\n\
+            .||.....||.\n\
+            .|L-7.F-J|.\n\
+            .|..|.|..|.\n\
+            .L--J.L--J.\n\
+            ...........\
+        ";
+
+        let result = Map::from(input).find_path_area();
+
+        assert_eq!(result, 4);
+    }
+    #[test]
+    fn find_path_area_2() {
+        let input = "\
+            .F----7F7F7F7F-7....\n\
+            .|F--7||||||||FJ....\n\
+            .||.FJ||||||||L7....\n\
+            FJL7L7LJLJ||LJ.L-7..\n\
+            L--J.L7...LJS7F-7L7.\n\
+            ....F-J..F7FJ|L7L7L7\n\
+            ....L7.F7||L7|.L7L7|\n\
+            .....|FJLJ|FJ|F7|.LJ\n\
+            ....FJL-7.||.||||...\n\
+            ....L---J.LJ.LJLJ...\
+        ";
+
+        let result = Map::from(input).find_path_area();
+
+        assert_eq!(result, 8);
+    }
+
+    #[test]
+    fn find_path_area_complex() {
+        let input = "\
+            FF7FSF7F7F7F7F7F---7\n\
+            L|LJ||||||||||||F--J\n\
+            FL-7LJLJ||||||LJL-77\n\
+            F--JF--7||LJLJ7F7FJ-\n\
+            L---JF-JLJ.||-FJLJJ7\n\
+            |F|F-JF---7F7-L7L|7|\n\
+            |FFJF7L7F-JF7|JL---7\n\
+            7-L-JL7||F7|L7F-7F7|\n\
+            L.L7LFJ|||||FJL7||LJ\n\
+            L7JLJL-JLJLJL--JLJ.L\
+        ";
+
+        let result = Map::from(input).find_path_area();
+
+        assert_eq!(result, 10);
     }
 }
