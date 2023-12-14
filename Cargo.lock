@@ -62,6 +62,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day14"
+version = "0.1.0"
+dependencies = [
+ "aoc",
+ "array2d",
+]
+
+[[package]]
 name = "day2"
 version = "0.1.0"
 dependencies = [
