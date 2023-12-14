@@ -30,23 +30,13 @@ impl Pattern {
     }
 
     fn is_reflection(&self, idx: usize, direction: &Direction) -> bool {
-        let total_len = match direction {
-            Direction::Vertical => self.map.row_len(),
-            Direction::Horizontal => self.map.column_len(),
-        };
-
-        let range_before = (0..idx + 1).len();
-        let range_after = (idx + 1..total_len).len();
-        let smallest_range = range_before.min(range_after);
-
         let search = match direction {
             Direction::Vertical => self.map.as_columns(),
             Direction::Horizontal => self.map.as_rows(),
         };
 
-        let before = search[idx + 1 - smallest_range..idx + 1].to_vec();
-
-        let after = search[idx + 1..idx + 1 + smallest_range].to_vec();
+        let before = search[..idx + 1].to_vec();
+        let after = search[idx + 1..].to_vec();
 
         let smudges: u64 = before.iter().rev()
             .zip(after.iter())
