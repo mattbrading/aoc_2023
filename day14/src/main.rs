@@ -55,63 +55,43 @@ impl ToString for Dish {
     }
 }
 
-enum Direction {
-    N,
-    E,
-    S,
-    W,
-}
-
 impl Dish {
-    fn tilt(&mut self, direction: Direction) -> &mut Self {
-        let source = match direction {
-            Direction::N | Direction::S => self.grid.as_columns(),
-            Direction::E | Direction::W => self.grid.as_rows(),
-        };
+    fn tilt(&mut self, rotate: bool) -> &mut Self {
+        let new_cols = self.grid.columns_iter().map(|row| {
+            let mut free_space = None;
 
-        let new_cols: Vec<Vec<Tile>> = source
-            .iter()
-            .map(|row| {
-                let mut free_space = None;
-
-                let row: Vec<(usize, &Tile)> = match direction {
-                    Direction::N | Direction::W => row.iter().enumerate().collect(),
-                    Direction::S | Direction::E => row.iter().rev().enumerate().collect(),
+            row.enumerate().fold(vec![], |mut acc, (row_idx, tile)| {
+                acc.push(*tile);
+                match (tile, free_space) {
+                    (Tile::Empty, None) => {
+                        free_space = Some(row_idx);
+                    }
+                    (Tile::Obsticle, Some(_)) => {
+                        free_space = None;
+                    }
+                    (Tile::Rounded, Some(free_row)) => {
+                        acc[free_row] = Tile::Rounded;
+                        acc[row_idx] = Tile::Empty;
+                        free_space = Some(free_row + 1);
+                    }
+                    _ => {}
                 };
 
-                let row = row
-                    .iter()
-                    .copied()
-                    .fold(vec![], |mut acc, (row_idx, tile)| {
-                        acc.push(*tile);
-                        match (tile, free_space) {
-                            (Tile::Empty, None) => {
-                                free_space = Some(row_idx);
-                            }
-                            (Tile::Obsticle, Some(_)) => {
-                                free_space = None;
-                            }
-                            (Tile::Rounded, Some(free_row)) => {
-                                acc[free_row] = Tile::Rounded;
-                                acc[row_idx] = Tile::Empty;
-                                free_space = Some(free_row + 1);
-                            }
-                            _ => {}
-                        };
-
-                        return acc;
-                    });
-
-                match direction {
-                    Direction::N | Direction::W => row,
-                    Direction::S | Direction::E => row.iter().rev().copied().collect(),
-                }
+                return acc;
             })
-            .collect();
+        });
 
-        self.grid = match direction {
-            Direction::N | Direction::S => Array2D::from_columns(&new_cols).unwrap(),
-            Direction::E | Direction::W => Array2D::from_rows(&new_cols).unwrap(),
+        self.grid = match rotate {
+            true => Array2D::from_rows(
+                &new_cols
+                    .map(|mut r| {
+                        r.reverse();
+                        r
+                    })
+                    .collect::<Vec<Vec<Tile>>>(),
+            )
+            .unwrap(),
+            false => Array2D::from_columns(&new_cols.collect::<Vec<Vec<Tile>>>()).unwrap(),
         };
 
         return self;
@@ -127,10 +107,7 @@ impl Dish {
     }
 
     fn cycle(&mut self) -> &Self {
-        self.tilt(Direction::N)
-            .tilt(Direction::W)
-            .tilt(Direction::S)
-            .tilt(Direction::E);
+        self.tilt(true).tilt(true).tilt(true).tilt(true);
 
         return self;
     }
@@ -166,7 +143,7 @@ impl Dish {
 
 fn main() {
     aoc::run(14, |input| {
-        let part_1 = Dish::from(input).tilt(Direction::N).total_load();
+        let part_1 = Dish::from(input).tilt(false).total_load();
         let part_2 = Dish::from(input).cycle_repeat(1_000_000_000).total_load();
 
         return (Some(part_1), Some(part_2));
@@ -191,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_total_load_north() {
-        let result = Dish::from(INPUT).tilt(crate::Direction::N).total_load();
+        let result = Dish::from(INPUT).tilt(false).total_load();
         assert_eq!(result, 136);
     }
 
