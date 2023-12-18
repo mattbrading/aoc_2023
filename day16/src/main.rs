@@ -7,13 +7,16 @@ use aoc;
 
 fn main() {
     aoc::run(16, |input| {
-        let part_1 = Contraption::from_str(input)
-            .expect("Failed to Parse")
-            .count_activated_tiles(Photon {
-                position: (0, 0),
-                direction: crate::Direction::Right,
-            });
-        return (Some(part_1), None);
+        let contaption = Contraption::from_str(input).expect("Failed to Parse");
+
+        let part_1 = contaption.count_activated_tiles(Photon {
+            position: (0, 0),
+            direction: crate::Direction::Right,
+        });
+
+        let part_2 = contaption.find_max_configuration();
+
+        return (Some(part_1), Some(part_2));
     })
 }
 
@@ -75,7 +78,18 @@ impl Contraption {
         let mut visited_tiles = HashSet::from([init.position]);
         let mut photon_history = HashSet::new();
 
-        let mut photons = match self.rows.get(0).and_then(|c| c.get(&0)) {
+        let start_search = match init.direction {
+            Direction::Left | Direction::Right => self
+                .rows
+                .get(init.position.0)
+                .and_then(|c| c.get(&init.position.1)),
+            Direction::Up | Direction::Down => self
+                .cols
+                .get(init.position.1)
+                .and_then(|r| r.get(&init.position.0)),
+        };
+
+        let mut photons = match start_search {
             Some(tile) => self.tile_beam_result(tile, init.position, init.direction),
             None => vec![init],
         };
@@ -138,20 +152,6 @@ impl Contraption {
             });
 
             photons = new_photons.collect();
-        }
-
-        for r_idx in 0..self.rows.len() {
-            let col_str = (0..self.cols.len())
-                .map(|c_idx| {
-                    if visited_tiles.contains(&(r_idx, c_idx)) {
-                        "#"
-                    } else {
-                        "."
-                    }
-                })
-                .collect::<Vec<&str>>()
-                .join("");
-            println!("{}", col_str)
         }
 
         return visited_tiles.len() as u64;
@@ -221,6 +221,35 @@ impl Contraption {
             }
         }
     }
+
+    fn find_max_configuration(&self) -> u64 {
+        let top_edge = (0..self.cols.len()).map(|i| Photon {
+            position: (0, i),
+            direction: Direction::Down,
+        });
+        let bottom_edge = (0..self.cols.len()).map(|i| Photon {
+            position: (self.rows.len() - 1, i),
+            direction: Direction::Up,
+        });
+        let left_edge = (0..self.rows.len()).map(|i| Photon {
+            position: (i, 0),
+            direction: Direction::Right,
+        });
+        let right_edge = (0..self.rows.len()).map(|i| Photon {
+            position: (i, self.cols.len() - 1),
+            direction: Direction::Left,
+        });
+
+        let chain = top_edge
+            .chain(bottom_edge)
+            .chain(left_edge)
+            .chain(right_edge);
+
+        return chain
+            .map(|photon| self.count_activated_tiles(photon))
+            .max()
+            .unwrap();
+    }
 }
 
 #[cfg(test)]
@@ -252,5 +281,14 @@ mod tests {
             });
 
         assert_eq!(result, 46);
+    }
+
+    #[test]
+    fn test_max_activated_tiles() {
+        let result = Contraption::from_str(INPUT)
+            .expect("Failed to Parse")
+            .find_max_configuration();
+
+        assert_eq!(result, 51);
     }
 }
