@@ -9,9 +9,10 @@ fn main() {
     aoc::run(17, |input| {
         let map = CityMap::from(input);
 
-        let part_1 = map.find_best_path();
+        let part_1 = map.find_best_path(0, 3);
+        let part_2 = map.find_best_path(4, 10);
 
-        return (part_1, None);
+        return (part_1, part_2);
     })
 }
 
@@ -35,7 +36,7 @@ impl CityMap {
         self.grid.get(pos.0).and_then(|l| l.get(pos.1)).copied()
     }
 
-    fn find_best_path(&self) -> Option<u64> {
+    fn find_best_path(&self, min_dist: u32, max_dist: u32) -> Option<u64> {
         let row_len = self.grid.len();
         let col_len = self.grid[0].len();
 
@@ -58,12 +59,17 @@ impl CityMap {
             println!("{} {} {} {} {} {}", hl, row, col, d_row, d_col, distance);
 
             if (row, col) == end_position {
-                println!("DONE!");
-                result = Some(hl as u64);
-                break;
+                if distance >= min_dist {
+                    println!("DONE!");
+                    result = Some(hl as u64);
+                    break;
+                } else {
+                    println!("Not yet!");
+                    continue;
+                }
             }
 
-            if distance < 3 && (d_row, d_col) != (0, 0) {
+            if distance < max_dist && (d_row, d_col) != (0, 0) {
                 let next_row = row.checked_add_signed(d_row);
                 let next_col = col.checked_add_signed(d_col);
 
@@ -84,30 +90,33 @@ impl CityMap {
                 }
             }
 
-            let next_directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-                .iter()
-                .filter(|a| a != &&(d_row, d_col) && a != &&(-d_row, -d_col));
-
-            for (nd_row, nd_col) in next_directions.copied() {
-                let next_row = row.checked_add_signed(nd_row);
-                let next_col = col.checked_add_signed(nd_col);
-
-                let next = next_row
-                    .and_then(|row| next_col.and_then(|col| Some((row, col))))
-                    .and_then(|pos| self.get(pos));
-
-                match next {
-                    Some(cost) => open_set.push(Reverse((
-                        hl + cost,
-                        next_row.unwrap(),
-                        next_col.unwrap(),
-                        nd_row,
-                        nd_col,
-                        1,
-                    ))),
-                    None => {}
+            if distance >= min_dist || (d_row, d_col) == (0, 0) {
+                let next_directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+                    .iter()
+                    .filter(|a| a != &&(d_row, d_col) && a != &&(-d_row, -d_col));
+    
+                for (nd_row, nd_col) in next_directions.copied() {
+                    let next_row = row.checked_add_signed(nd_row);
+                    let next_col = col.checked_add_signed(nd_col);
+    
+                    let next = next_row
+                        .and_then(|row| next_col.and_then(|col| Some((row, col))))
+                        .and_then(|pos| self.get(pos));
+    
+                    match next {
+                        Some(cost) => open_set.push(Reverse((
+                            hl + cost,
+                            next_row.unwrap(),
+                            next_col.unwrap(),
+                            nd_row,
+                            nd_col,
+                            1,
+                        ))),
+                        None => {}
+                    }
                 }
             }
+
         }
 
         return result;
@@ -136,8 +145,30 @@ mod tests {
 
     #[test]
     fn test_find_best_path() {
-        let result = CityMap::from(INPUT).find_best_path();
+        let result = CityMap::from(INPUT).find_best_path(0, 3);
 
         assert_eq!(result, Some(102));
+    }
+
+    #[test]
+    fn test_find_best_path_ultra() {
+        let result = CityMap::from(INPUT).find_best_path(4, 10);
+
+        assert_eq!(result, Some(94));
+    }
+
+    #[test]
+    fn test_find_best_path_ultra_2() {
+        let input = "\
+            111111111111\n\
+            999999999991\n\
+            999999999991\n\
+            999999999991\n\
+            999999999991\
+        ";
+
+        let result = CityMap::from(input).find_best_path(4, 10);
+
+        assert_eq!(result, Some(71));
     }
 }
