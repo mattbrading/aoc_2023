@@ -1,5 +1,5 @@
 use aoc;
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Range, vec, process::Output};
 fn main() {
     aoc::run(19, |input| {
         let part_1 = PartSystem::from(input).sum_accepted_parts();
@@ -128,6 +128,86 @@ impl PartSystem {
 
         return sum;
     }
+
+    fn rule_find_in_out_range(
+        &self,
+        rule: &str,
+        eval_char: &char,
+        eval_range: Range<u64>,
+    ) -> (Option<Range<u64>>, Option<Range<u64>>, &str) {
+        // a<2006:qkq
+
+        let (rule, outcome) = match rule.split_once(":") {
+            Some((a, b)) => (Some(a), b),
+            None => (None, rule),
+        };
+
+        let rule = rule.map(|r| {
+            let mut r = r.chars();
+            let attr = r.next().unwrap();
+            let comp = r.next().unwrap();
+            let val: u64 = r.collect::<String>().parse().unwrap();
+
+            if &attr != eval_char {
+                return (Some(eval_range.clone()), Some(eval_range.clone()));
+            }
+
+            let comp_range = 0..val;
+            let start_in = comp_range.contains(&eval_range.start);
+            let end_in = comp_range.contains(&eval_range.end);
+
+            let (in_range, out_range) = match (start_in, end_in) {
+                (true, true) => (Some(eval_range), None),
+                (false, false) => (None, Some(eval_range)),
+                (true, false) => (Some(eval_range.start..comp_range.end), Some(comp_range.end+1..eval_range.end)),
+                _ => panic!("Invalid combination!")
+            };
+
+            match comp {
+                '<' => (in_range, out_range),
+                '>' => (out_range, in_range),
+                _ => panic!("invalid comparison")
+            }
+        });
+
+
+        match rule {
+            Some((i, o)) => (i, o, outcome),
+            None => (Some(eval_range), None, outcome)
+        }
+
+    }
+
+    fn find_valid_ranges(&self, char: char, workflow: &str, in_ranges: Vec<Range<u64>>) -> Vec<Range<u64>> {
+        let workflow = self.workflows.get(workflow).expect("Invalid workflow");
+
+        workflow.fold((vec![], in_ranges), |(mut i, mut o), rule| {
+            let (new_i, new_o, outcome) = self.rule_find_in_out_range(rule, &char, i);
+            
+
+
+        });
+
+        return vec![];
+    }
+
+    fn find_distinct_by_char(&self, char: char) -> u64 {
+        self.find_valid_ranges(char, "in", vec![0..4001])
+            .iter()
+            .map(|r| r.end - r.start)
+            .sum()
+    }
+    
+
+    fn find_distinct_combinations(&self) -> u64 {
+        let chars = "xmas".chars();
+
+        let result: u64 = chars
+            .map(|c| self.find_distinct_by_char(c)) 
+            .sum();
+
+        return result;
+    }
 }
 
 #[cfg(test)]
@@ -158,5 +238,12 @@ mod tests {
         let result = PartSystem::from(INPUT).sum_accepted_parts();
 
         assert_eq!(result, 19114)
+    }
+
+    #[test]
+    fn test_find_distinct_combinations() {
+        let result = PartSystem::from(INPUT).find_distinct_combinations();
+
+        assert_eq!(result, 167409079868000)
     }
 }
